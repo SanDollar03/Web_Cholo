@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLOv8 Real-Time Detection</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/scripts.js') }}" defer></script>
+</head>
+<body>
+    <header>
+        <h1>Web CYOLO</h1>
+        <p>Model: YOLOv8x ------ 日本自動車東京工場：太郎</p>
+    </header>
+    <div class="container">
+        <div class="left">
+            <img id="camera-feed" src="{{ url_for('video_feed') }}" alt="Video Feed">
+            <div class="camera-controls">
+                <label for="camera-select">Camera Capture ID:</label>
+                <select id="camera-select">
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                </select>
+                <button id="change-camera-btn">Change Camera</button>
+                <button id="flip-camera-btn">Camera Flip</button>
+            </div>
+        </div>
+        <div class="right">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Class ID</th>
+                        <th>Class Name</th>
+                        <th>Timestamp</th>
+                        <th>Center X</th>
+                        <th>Center Y</th>
+                        <th>Width</th>
+                        <th>Height</th>
+                    </tr>
+                </thead>
+                <tbody id="log-table-body">
+                    <!-- ログがここに追加されます -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
