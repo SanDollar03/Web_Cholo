@@ -1,0 +1,45 @@
+プロジェクトディレクトリ構造の更新
+
+yolov8_flask_app/
+├── app.py
+├── templates/
+│   └── index.html
+└── static/
+    ├── css/
+    │   └── styles.css
+    └── js/
+        └── scripts.js
+
+必要ライブラリ
+
+pip install flask
+pip install opencv-python
+pip install ultralytics
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+ビルド化
+
+pyinstaller のインストール
+pip install pyinstaller
+
+pyinstaller の実行
+pyinstaller --onefile --add-data "templates;templates" --add-data "static;static" app.py
+--onefile: 単一の実行可能ファイルを作成します。
+--add-data "templates;templates": テンプレートディレクトリを含めます。
+--add-data "static;static": 静的ファイルディレクトリを含めます。
+
+生成された実行ファイルの確認
+your_project/
+├── dist/
+│   └── app.exe
+├── build/
+├── app.spec
+├── app.py
+├── templates/
+│   └── index.html
+└── static/
+    ├── css/
+    │   └── styles.css
+    └── js/
+        └── scripts.js
+distディレクトリの中に app.exe という実行ファイルが生成されます。
