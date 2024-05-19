@@ -1,0 +1,121 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    font-family: 'Roboto', 'Meiryo UI', sans-serif; /* 最新のトレンドのフォントファミリー */
+}
+
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+    z-index: 1000;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2em; /* 大きい文字 */
+}
+
+header p {
+    margin: 0;
+    font-size: 1em; /* 小さい文字 */
+}
+
+.container {
+    display: flex;
+    padding-top: 80px; /* ヘッダーの高さ分の余白を広げる */
+    height: calc(100% - 80px); /* ヘッダーの高さ分を引いた高さ */
+    width: 100%; /* 横幅を100%に設定 */
+}
+
+.left {
+    flex: 0 0 40%; /* 左側の幅を40%に設定 */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; /* カメラの映像を上部に配置 */
+    padding: 10px; /* カメラ周囲の余白を追加 */
+}
+
+.right {
+    flex: 0 0 60%; /* 右側の幅を60%に設定 */
+    padding: 10px; /* テーブル周囲の余白を追加 */
+    overflow-y: auto;
+    background-color: #f0f0f0;
+    font-size: 11px; /* ログのフォントサイズを11pxに設定 */
+}
+
+img {
+    max-width: 100%;
+    max-height: 100%;
+    margin-top: 20px; /* カメラの上部に余白を広げる */
+    margin-bottom: 10px; /* カメラの下に余白を追加 */
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 2px solid black; /* テーブル全体のボーダー */
+    margin-top: 20px; /* テーブルの上に余白を広げる */
+}
+
+table, th, td {
+    border: 1px solid black; /* セルごとのボーダー */
+}
+
+th, td {
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    background-color: #333;
+    color: white;
+}
+
+#log-table-body {
+    max-height: calc(100% - 80px); /* テーブルの高さを指定 */
+    overflow-y: scroll; /* スクロールバーを表示 */
+}
+
+.camera-controls {
+    display: flex;
+    align-items: center;
+    margin-top: 10px; /* カメラコントロールの上部余白を追加 */
+}
+
+.camera-controls label {
+    margin-right: 10px; /* ラベルの右に余白を追加 */
+    font-weight: bold; /* ラベルのフォントを太字に設定 */
+}
+
+camera-controls select {
+    margin-right: 10px; /* プルダウンの右に余白を追加 */
+    padding: 5px; /* プルダウンのパディングを追加 */
+    height: 34px; /* プルダウンの高さをボタンと同じに設定 */
+    border: 1px solid #ccc; /* プルダウンのボーダーを追加 */
+    border-radius: 4px; /* プルダウンの角を丸くする */
+    font-size: 14px; /* プルダウンのフォントサイズを設定 */
+}
+
+camera-controls button {
+    padding: 5px 10px; /* ボタンのパディングを設定 */
+    height: 34px; /* ボタンの高さを設定 */
+    border: 1px solid #ccc; /* ボタンのボーダーを追加 */
+    border-radius: 4px; /* ボタンの角を丸くする */
+    background-color: #333; /* ボタンの背景色を設定 */
+    color: white; /* ボタンの文字色を白に設定 */
+    cursor: pointer; /* ボタンにカーソルを設定 */
+}
+
+camera-controls button:hover {
+    background-color: #555; /* ボタンのホバー時の背景色を設定 */
+}
