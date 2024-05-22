@@ -92,13 +92,19 @@ th {
     margin-top: 10px; /* カメラコントロールの上部余白を追加 */
 }
 
+.folder-controls {
+    display: flex;
+    align-items: center;
+    margin-top: 10px; /* フォルダコントロールの上部余白を追加 */
+}
+
 .camera-controls label {
     margin-right: 10px; /* ラベルの右に余白を追加 */
     font-weight: bold; /* ラベルのフォントを太字に設定 */
     font-size: 16px; /* プルダウンのフォントサイズを設定 */
 }
 
-camera-controls select {
+.camera-controls select {
     margin: 10px; /* プルダウンの右に余白を追加 */
     padding: 5px; /* プルダウンのパディングを追加 */
     height: 40px; /* プルダウンの高さをボタンと同じに設定 */
@@ -108,7 +114,7 @@ camera-controls select {
     font-weight: bold; /* ラベルのフォントを太字に設定 */
 }
 
-camera-controls button {
+.camera-controls button, .folder-controls button {
     padding: 5px 10px; /* ボタンのパディングを設定 */
     height: 40px; /* ボタンの高さを設定 */
     border: 1px solid #ccc; /* ボタンのボーダーを追加 */
@@ -120,6 +126,12 @@ camera-controls button {
     font-weight: bold; /* ラベルのフォントを太字に設定 */
 }
 
-camera-controls button:hover {
+.camera-controls button:hover, .folder-controls button:hover {
     background-color: #555; /* ボタンのホバー時の背景色を設定 */
+}
+
+.folder-controls input {
+    flex-grow: 1;
+    width: calc(100% - 160px); /* ボタンの幅を引いた残りの幅を設定 */
+    height: 40px; /* テキストボックスの高さを設定 */
 }
