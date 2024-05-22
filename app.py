@@ -1,206 +1,136 @@
-import tkinter as tk
-import customtkinter as ctk
-import webbrowser
-import pyautogui
+import logging
+from flask import Flask, render_template, Response, jsonify
+import cv2
+import torch
+from ultralytics import YOLO
+from datetime import datetime
+import json
 import time
-import threading
-import os
-import pandas as pd
-import sys
-import psutil
+import webbrowser
+from threading import Timer
 
-# タブ切り替えアプリケーションクラス
-class TabSwitcherApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Tab Switcher")
-        self.root.geometry("880x520")  # ウィンドウサイズを設定
-        self.root.resizable(False, False)  # ウィンドウサイズを固定
+# ログ設定
+logging.basicConfig(level=logging.DEBUG)
 
-        # フレームを使用してUIを整理
-        self.frame = ctk.CTkFrame(self.root, corner_radius=10)
-        self.frame.pack(pady=20, padx=20, fill="both", expand=True)
+app = Flask(__name__)
 
-        self.url_entries = []  # URL入力フィールドのリスト
-        self.time_entries = []  # タイマー入力フィールドのリスト
-        self.user_entries = []  # ユーザー名入力フィールドのリスト
-        self.pass_entries = []  # パスワード入力フィールドのリスト
+logging.debug('App initialized')
 
-        # ヘッダラベルを追加
-        headers = ["URL", "Username", "Password", "Time (seconds)"]
-        for j, header in enumerate(headers):
-            label = ctk.CTkLabel(self.frame, text=header)
-            label.grid(row=0, column=j, padx=5, pady=5, sticky="ew")
+# デバイスの設定
+device = torch.device('cpu')
+logging.debug('Device set to CPU')
 
-        # URL、ユーザー名、パスワード、タイマー入力フィールドを最大10行作成
-        for i in range(10):
-            url_entry = ctk.CTkEntry(self.frame, width=400, state='readonly')  # URL入力フィールド
-            url_entry.grid(row=i+1, column=0, padx=5, pady=5)
-            self.url_entries.append(url_entry)  # リストに追加
+# YOLOv8n (Nano) モデルをロード
+model = YOLO('yolov8s.pt')
+model.to(device)  # モデルをCPUに移動
+logging.debug('Model loaded and moved to CPU')
 
-            user_entry = ctk.CTkEntry(self.frame, width=150, state='readonly')  # ユーザー名入力フィールド
-            user_entry.grid(row=i+1, column=1, padx=5, pady=5)
-            self.user_entries.append(user_entry)  # リストに追加
+# カメラを初期化
+camera_id = 0
+flip_camera = False
+cap = cv2.VideoCapture(camera_id)
+logging.debug(f'Camera initialized with ID {camera_id}')
 
-            pass_entry = ctk.CTkEntry(self.frame, show="*", width=150, state='readonly')  # パスワード入力フィールド
-            pass_entry.grid(row=i+1, column=2, padx=5, pady=5)
-            self.pass_entries.append(pass_entry)  # リストに追加
+def generate_frames():
+    global flip_camera
+    while True:
+        success, frame = cap.read()
+        if not success:
+            logging.error('Failed to read frame from camera')
+            break
+        else:
+            if flip_camera:
+                frame = cv2.flip(frame, 1)
+            # YOLOv8で推論を実行
+            results = model(frame)
+            logging.debug('Inference executed')
 
-            time_entry = ctk.CTkEntry(self.frame, width=100, state='readonly')  # タイマー入力フィールド
-            time_entry.grid(row=i+1, column=3, padx=5, pady=5)
-            self.time_entries.append(time_entry)  # リストに追加
+            # 結果をフレームに描画
+            annotated_frame = results[0].plot()
 
-        # ボタンのフレームを追加
-        self.button_frame = ctk.CTkFrame(self.frame, corner_radius=10)
-        self.button_frame.grid(row=11, column=0, columnspan=4, pady=10, sticky="ew")
+            # フレームをJPEG形式にエンコード
+            ret, buffer = cv2.imencode('.jpg', annotated_frame)
+            frame = buffer.tobytes()
 
-        self.start_button = ctk.CTkButton(self.button_frame, text="Start", command=self.start, state="normal")  # 開始ボタン
-        self.start_button.pack(side=tk.LEFT, padx=10, pady=10)
+            # フレームをジェネレータとして返す
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
-        self.save_button = ctk.CTkButton(self.button_frame, text="Save", command=self.save_data, state="normal")  # 保存ボタン
-        self.save_button.pack(side=tk.LEFT, padx=10, pady=10)
+def generate_logs():
+    while True:
+        success, frame = cap.read()
+        if not success:
+            logging.error('Failed to read frame from camera')
+            break
+        else:
+            now = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+            # YOLOv8で推論を実行
+            results = model(frame)
+            logging.debug('Inference executed for logging')
 
-        self.edit_button = ctk.CTkButton(self.button_frame, text="Edit", command=self.enable_editing, fg_color="blue")  # 編集ボタン
-        self.edit_button.pack(side=tk.LEFT, padx=10, pady=10)
-
-        self.confirm_button = ctk.CTkButton(self.button_frame, text="Confirm", command=self.disable_editing, state="disabled", fg_color="gray")  # 確定ボタン
-        self.confirm_button.pack(side=tk.LEFT, padx=10, pady=10)
-
-        self.load_data()  # アプリケーション起動時にデータを読み込む
-
-    def load_data(self):
-        # CSVファイルからデータを読み込み、入力フィールドにセットする
-        if os.path.exists('data.csv'):
-            data = pd.read_csv('data.csv')
-            for i in range(min(10, len(data))):
-                if pd.isna(data.loc[i, 'URL']):
-                    data.loc[i, 'URL'] = ''
-                if pd.isna(data.loc[i, 'Username']):
-                    data.loc[i, 'Username'] = ''
-                if pd.isna(data.loc[i, 'Password']):
-                    data.loc[i, 'Password'] = ''
-                if pd.isna(data.loc[i, 'Time']):
-                    data.loc[i, 'Time'] = ''
-                self.url_entries[i].configure(state='normal')
-                self.url_entries[i].insert(0, data.loc[i, 'URL'])
-                self.url_entries[i].configure(state='readonly')
-                self.user_entries[i].configure(state='normal')
-                self.user_entries[i].insert(0, data.loc[i, 'Username'])
-                self.user_entries[i].configure(state='readonly')
-                self.pass_entries[i].configure(state='normal')
-                self.pass_entries[i].insert(0, data.loc[i, 'Password'])
-                self.pass_entries[i].configure(state='readonly')
-                self.time_entries[i].configure(state='normal')
-                self.time_entries[i].insert(0, str(data.loc[i, 'Time']))
-                self.time_entries[i].configure(state='readonly')
-
-    def save_data(self):
-        # 入力フィールドからデータを取得し、CSVファイルに保存する
-        data = []
-        for i in range(10):
-            url = self.url_entries[i].get()
-            username = self.user_entries[i].get()
-            password = self.pass_entries[i].get()
-            time = self.time_entries[i].get()
-            if url and time:
-                data.append({
-                    'URL': url,
-                    'Username': username,
-                    'Password': password,
-                    'Time': int(time) if time.isdigit() else None
-                })
-        df = pd.DataFrame(data)
-        df.to_csv('data.csv', index=False)
-
-    def enable_editing(self):
-        for i in range(10):
-            self.url_entries[i].configure(state='normal')
-            self.user_entries[i].configure(state='normal')
-            self.pass_entries[i].configure(state='normal')
-            self.time_entries[i].configure(state='normal')
-        self.edit_button.configure(fg_color="red")
-        self.start_button.configure(state="disabled", fg_color="gray")
-        self.save_button.configure(state="disabled", fg_color="gray")
-        self.confirm_button.configure(state="normal", fg_color="blue")
-
-    def disable_editing(self):
-        for i in range(10):
-            self.url_entries[i].configure(state='readonly')
-            self.user_entries[i].configure(state='readonly')
-            self.pass_entries[i].configure(state='readonly')
-            self.time_entries[i].configure(state='readonly')
-        self.edit_button.configure(fg_color="blue")
-        self.start_button.configure(state="normal", fg_color="blue")
-        self.save_button.configure(state="normal", fg_color="blue")
-        self.confirm_button.configure(state="disabled", fg_color="gray")
-
-    def open_urls(self, urls):
-        for url in urls:
-            webbrowser.open_new_tab(url)
-            time.sleep(5)  # 各URLが開かれるまで待機
-
-    def close_app(self):
-        self.root.quit()
-        self.root.destroy()
-        sys.exit()
-
-    def start(self):
-        # 入力されたURL、ユーザー名、パスワード、タイマー秒数を取得
-        urls = [entry.get() for entry in self.url_entries if entry.get()]
-        users = [entry.get() for entry in self.user_entries]
-        passwords = [entry.get() for entry in self.pass_entries]
-        times = [int(entry.get()) for entry in self.time_entries if entry.get()]
-
-        # URLとタイマーの数が一致しない場合のチェック
-        if len(urls) != len(times):
-            print("URLと時間の入力数は同じでなければなりません")
-            return
-
-        # URLとタイマーが空でないことのチェック
-        if not urls or not times:
-            print("少なくとも1つのURLと時間を入力してください")
-            return
-
-        # フォームを非表示にする
-        self.frame.pack_forget()
-
-        # 各URLを新しいタブで順に開く
-        threading.Thread(target=self.open_urls, args=(urls,)).start()
-
-        # タブを切り替える関数
-        def switch_tabs():
-            current_index = 0
-            while True:
-                pyautogui.hotkey('ctrl', str(current_index + 1))  # タブを切り替え
-                pyautogui.hotkey('ctrl', 'r')  # タブをリフレッシュ
-
-                # ユーザー名とパスワードの入力が必要かチェックして自動入力
-                user = users[current_index]
-                password = passwords[current_index]
-                if user and password:
-                    pyautogui.write(user)
-                    pyautogui.press('tab')
-                    pyautogui.write(password)
-                    pyautogui.press('enter')
-
-                time.sleep(times[current_index])  # 指定された時間待機
-                current_index = (current_index + 1) % len(urls)  # 次のタブに切り替え
-
-        threading.Thread(target=switch_tabs).start()  # 別スレッドでタブ切り替えを実行
-
-        # ブラウザが閉じられたかを確認する関数
-        def monitor_browser():
-            while True:
-                if not any(["msedge.exe" in p.name() or "chrome.exe" in p.name() for p in psutil.process_iter()]):
-                    self.close_app()
+            # ログの生成
+            for result in results[0].boxes:
+                class_id = int(result.cls)
+                class_name = model.names[class_id]
+                center_x = result.xywh[0][0].item()
+                center_y = result.xywh[0][1].item()
+                width = result.xywh[0][2].item()
+                height = result.xywh[0][3].item()
+                
+                log_data = {
+                    "class_id": class_id,
+                    "class_name": class_name,
+                    "timestamp": now,
+                    "center_x": center_x,
+                    "center_y": center_y,
+                    "width": width,
+                    "height": height
+                }
+                yield f"data: {json.dumps(log_data)}\n\n"
                 time.sleep(1)
 
-        threading.Thread(target=monitor_browser).start()  # 別スレッドでブラウザの監視を実行
+@app.route('/')
+def index():
+    logging.debug('Rendering index.html')
+    return render_template('index.html')
+
+@app.route('/video_feed')
+def video_feed():
+    logging.debug('Starting video feed')
+    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/log_feed')
+def log_feed():
+    logging.debug('Starting log feed')
+    return Response(generate_logs(), mimetype='text/event-stream')
+
+@app.route('/change_camera/<int:camera_id>', methods=['GET'])
+def change_camera(camera_id):
+    global cap
+    cap.release()
+    cap = cv2.VideoCapture(camera_id)
+    logging.debug(f'Camera changed to ID {camera_id}')
+    return jsonify(success=True)
+
+@app.route('/flip_camera', methods=['GET'])
+def flip_camera():
+    global flip_camera
+    flip_camera = not flip_camera
+    logging.debug(f'Camera flip set to {flip_camera}')
+    return jsonify(success=True)
+
+@app.route('/current_camera', methods=['GET'])
+def current_camera():
+    global camera_id
+    logging.debug(f'Current camera ID is {camera_id}')
+    return jsonify(camera_id=camera_id)
+
+def open_browser():
+    logging.debug('Opening browser to http://127.0.0.1:5000')
+    webbrowser.open_new("http://127.0.0.1:5000")
 
 if __name__ == "__main__":
-    ctk.set_appearance_mode("System")  # 見た目のモードをシステム設定に合わせる
-    ctk.set_default_color_theme("blue")  # カラーテーマを青に設定
-
-    root = ctk.CTk()  # CustomTkinterのルートウィンドウを作成
-    app = TabSwitcherApp(root)  # アプリケーションのインスタンスを作成
-    root.mainloop()  # メインループを開始
+    # サーバー起動後にブラウザを開く
+    Timer(1, open_browser).start()
+    logging.debug('Starting Flask app')
+    app.run(debug=True)
