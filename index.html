@@ -10,21 +10,21 @@
 <body>
     <header>
         <h1>Web CYOLO</h1>
-        <p>Model: YOLOv8x ------ 日本自動車東京工場：太郎</p>
+        <p>Model: YOLOv8s ------ 太郎</p>
     </header>
     <div class="container">
         <div class="left">
             <img id="camera-feed" src="{{ url_for('video_feed') }}" alt="Video Feed">
             <div class="camera-controls">
-                <label for="camera-select">Camera Capture ID:</label>
+                <label for="camera-select">カメラIDを選択してください:</label>
                 <select id="camera-select">
                     <option value="0">0</option>
                     <option value="1">1</option>
                     <option value="2">2</option>
                     <option value="3">3</option>
                 </select>
-                <button id="change-camera-btn">Change Camera</button>
-                <button id="flip-camera-btn">Camera Flip</button>
+                <button id="change-camera-btn">カメラID変更</button>
+                <button id="flip-camera-btn">カメラ左右反転</button>
             </div>
         </div>
         <div class="right">
