@@ -95,25 +95,29 @@ th {
 .camera-controls label {
     margin-right: 10px; /* ラベルの右に余白を追加 */
     font-weight: bold; /* ラベルのフォントを太字に設定 */
+    font-size: 16px; /* プルダウンのフォントサイズを設定 */
 }
 
 camera-controls select {
-    margin-right: 10px; /* プルダウンの右に余白を追加 */
+    margin: 10px; /* プルダウンの右に余白を追加 */
     padding: 5px; /* プルダウンのパディングを追加 */
-    height: 34px; /* プルダウンの高さをボタンと同じに設定 */
+    height: 40px; /* プルダウンの高さをボタンと同じに設定 */
     border: 1px solid #ccc; /* プルダウンのボーダーを追加 */
     border-radius: 4px; /* プルダウンの角を丸くする */
-    font-size: 14px; /* プルダウンのフォントサイズを設定 */
+    font-size: 16px; /* プルダウンのフォントサイズを設定 */
+    font-weight: bold; /* ラベルのフォントを太字に設定 */
 }
 
 camera-controls button {
     padding: 5px 10px; /* ボタンのパディングを設定 */
-    height: 34px; /* ボタンの高さを設定 */
+    height: 40px; /* ボタンの高さを設定 */
     border: 1px solid #ccc; /* ボタンのボーダーを追加 */
     border-radius: 4px; /* ボタンの角を丸くする */
     background-color: #333; /* ボタンの背景色を設定 */
     color: white; /* ボタンの文字色を白に設定 */
     cursor: pointer; /* ボタンにカーソルを設定 */
+    font-size: 16px; /* プルダウンのフォントサイズを設定 */
+    font-weight: bold; /* ラベルのフォントを太字に設定 */
 }
 
 camera-controls button:hover {
