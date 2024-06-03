@@ -222,4 +222,5 @@ if __name__ == "__main__":
     Timer(1, open_browser).start()
     logging.debug('Starting Flask app')
     atexit.register(release_resources)
-    app.run(debug=False)
+    #app.run(debug=False)
+    app.run(host="172.27.37.111", port=5000, debug=False)
